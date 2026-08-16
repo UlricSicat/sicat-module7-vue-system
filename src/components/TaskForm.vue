@@ -8,7 +8,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['save', 'cancel-edit'])
+const emit = defineEmits(['save', 'cancel-edit', 'invalid'])
 
 const emptyForm = () => ({
   title: '',
@@ -67,7 +67,10 @@ function validate() {
 }
 
 function handleSubmit() {
-  if (!validate()) return
+  if (!validate()) {
+    emit('invalid', 'Please fill in all required fields: Title, Subject, and Due Date.')
+    return
+  }
 
   emit('save', { ...form })
 
@@ -84,8 +87,8 @@ function handleCancel() {
 </script>
 
 <template>
-  <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-    <h2 class="text-lg font-semibold text-gray-800 mb-4">
+  <div>
+    <h2 class="text-lg font-semibold text-gray-800 mb-4 pr-6">
       {{ editingTask ? 'Edit Task' : 'Add New Task' }}
     </h2>
 

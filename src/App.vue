@@ -4,13 +4,22 @@ import AppHeader from './components/AppHeader.vue'
 import TaskForm from './components/TaskForm.vue'
 import TaskList from './components/TaskList.vue'
 import AppFooter from './components/AppFooter.vue'
+import TaskFormModal from './components/TaskFormModal.vue'
+import ConfirmDialog from './components/ConfirmDialog.vue'
+import NotificationToast from './components/NotificationToast.vue'
 
 const STORAGE_KEY = 'module7-task-records'
 
 const tasks = ref([])
 const searchTerm = ref('')
 const editingTask = ref(null)
-const feedback = ref({ message: '', type: '' })
+const showFormModal = ref(false)
+
+const showDeleteConfirm = ref(false)
+const pendingDeleteId = ref(null)
+
+const notifications = ref([])
+let notificationId = 0
 
 // Step 8: Load records from localStorage
 onMounted(() => {
@@ -22,11 +31,30 @@ function saveTasks() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks.value))
 }
 
-function showFeedback(message, type = 'success') {
-  feedback.value = { message, type }
-  setTimeout(() => {
-    feedback.value = { message: '', type: '' }
-  }, 2500)
+function notify(message, type = 'info') {
+  const id = ++notificationId
+  notifications.value.push({ id, message, type })
+  setTimeout(() => dismissNotification(id), 3000)
+}
+
+function dismissNotification(id) {
+  notifications.value = notifications.value.filter(n => n.id !== id)
+}
+
+// Modal controls
+function openAddTaskModal() {
+  editingTask.value = null
+  showFormModal.value = true
+}
+
+function openEditTaskModal(task) {
+  editingTask.value = task
+  showFormModal.value = true
+}
+
+function closeFormModal() {
+  showFormModal.value = false
+  editingTask.value = null
 }
 
 // Step 9: Create
@@ -36,7 +64,8 @@ function addTask(newTask) {
     ...newTask
   })
   saveTasks()
-  showFeedback('Task added successfully.', 'success')
+  notify('Task added successfully.', 'success')
+  closeFormModal()
 }
 
 // Step 12: Update
@@ -45,9 +74,9 @@ function updateTask(updatedFields) {
   if (index !== -1) {
     tasks.value[index] = { ...tasks.value[index], ...updatedFields }
     saveTasks()
-    showFeedback('Task updated successfully.', 'success')
+    notify('Task updated successfully.', 'success')
   }
-  editingTask.value = null
+  closeFormModal()
 }
 
 function handleSave(formData) {
@@ -58,26 +87,33 @@ function handleSave(formData) {
   }
 }
 
-function startEdit(task) {
-  editingTask.value = task
+function handleInvalid(message) {
+  notify(message, 'error')
 }
 
-function cancelEdit() {
-  editingTask.value = null
+// Step 10: Delete with notification-based confirmation (no window.confirm)
+function requestDelete(id) {
+  pendingDeleteId.value = id
+  showDeleteConfirm.value = true
 }
 
-// Step 10: Delete with confirmation
-function deleteTask(id) {
-  const confirmed = window.confirm('Are you sure you want to delete this task?')
-  if (!confirmed) return
+function cancelDelete() {
+  showDeleteConfirm.value = false
+  pendingDeleteId.value = null
+}
 
+function confirmDelete() {
+  const id = pendingDeleteId.value
   tasks.value = tasks.value.filter(task => task.id !== id)
   saveTasks()
-  showFeedback('Task deleted.', 'warning')
+  notify('Task deleted.', 'warning')
 
   if (editingTask.value && editingTask.value.id === id) {
-    editingTask.value = null
+    closeFormModal()
   }
+
+  showDeleteConfirm.value = false
+  pendingDeleteId.value = null
 }
 
 function toggleComplete(id) {
@@ -85,44 +121,50 @@ function toggleComplete(id) {
   if (task) {
     task.status = task.status === 'Completed' ? 'Pending' : 'Completed'
     saveTasks()
+    notify(
+      task.status === 'Completed' ? 'Task marked as completed.' : 'Task moved back to ongoing.',
+      'success'
+    )
   }
 }
 
-// Step 11: Search
+// Dashboard shows ONLY ongoing (Pending) tasks, filtered by search
+const ongoingTasks = computed(() => tasks.value.filter(t => t.status !== 'Completed'))
+
 const filteredTasks = computed(() => {
   const keyword = searchTerm.value.toLowerCase().trim()
-  if (!keyword) return tasks.value
-  return tasks.value.filter(
+  if (!keyword) return ongoingTasks.value
+  return ongoingTasks.value.filter(
     task =>
       task.title.toLowerCase().includes(keyword) ||
       task.subject.toLowerCase().includes(keyword)
   )
 })
 
-const pendingCount = computed(
-  () => tasks.value.filter(t => t.status === 'Pending').length
-)
+const pendingCount = computed(() => ongoingTasks.value.length)
 </script>
 
 <template>
   <div class="min-h-screen flex flex-col bg-gray-50">
+    <NotificationToast :notifications="notifications" @dismiss="dismissNotification" />
+
     <AppHeader :total-tasks="tasks.length" :pending-tasks="pendingCount" />
 
     <main class="flex-1 max-w-5xl w-full mx-auto px-4 py-6 space-y-6">
-      <!-- Feedback message -->
-      <transition name="fade">
-        <div
-          v-if="feedback.message"
-          class="rounded-lg px-4 py-2 text-sm font-medium"
-          :class="feedback.type === 'success'
-            ? 'bg-emerald-100 text-emerald-700'
-            : 'bg-amber-100 text-amber-700'"
-        >
-          {{ feedback.message }}
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div>
+          <h2 class="text-lg font-semibold text-gray-800">Ongoing Tasks</h2>
+          <p class="text-xs text-gray-500">
+            This dashboard shows tasks that are still pending. Completed tasks are hidden.
+          </p>
         </div>
-      </transition>
-
-      <TaskForm :editing-task="editingTask" @save="handleSave" @cancel-edit="cancelEdit" />
+        <button
+          @click="openAddTaskModal"
+          class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition inline-flex items-center gap-2 self-start sm:self-auto"
+        >
+          <span class="text-lg leading-none">+</span> Add Task
+        </button>
+      </div>
 
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div class="relative w-full sm:max-w-xs">
@@ -134,29 +176,37 @@ const pendingCount = computed(
           />
         </div>
         <p class="text-xs text-gray-500">
-          Showing {{ filteredTasks.length }} of {{ tasks.length }} task(s)
+          Showing {{ filteredTasks.length }} of {{ ongoingTasks.length }} ongoing task(s)
         </p>
       </div>
 
       <TaskList
         :tasks="filteredTasks"
-        @edit="startEdit"
-        @delete="deleteTask"
+        @edit="openEditTaskModal"
+        @delete="requestDelete"
         @toggle-complete="toggleComplete"
       />
     </main>
 
     <AppFooter />
+
+    <!-- Add / Edit Task window -->
+    <TaskFormModal :visible="showFormModal" @close="closeFormModal">
+      <TaskForm
+        :editing-task="editingTask"
+        @save="handleSave"
+        @cancel-edit="closeFormModal"
+        @invalid="handleInvalid"
+      />
+    </TaskFormModal>
+
+    <!-- Delete confirmation (replaces window.confirm) -->
+    <ConfirmDialog
+      :visible="showDeleteConfirm"
+      title="Delete Task"
+      message="Are you sure you want to delete this task? This action cannot be undone."
+      @confirm="confirmDelete"
+      @cancel="cancelDelete"
+    />
   </div>
 </template>
-
-<style scoped>
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.3s ease;
-}
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-}
-</style>
