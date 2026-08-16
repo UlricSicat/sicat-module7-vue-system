@@ -1,5 +1,62 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 @import "tailwindcss";
 
+@theme {
+  /* Apple devices (Safari/macOS/iOS) render true San Francisco via
+     -apple-system with zero network cost. Every other browser — Chrome,
+     Edge, Firefox, Android — falls through to Inter, the standard web
+     substitute for SF Pro (same neutral, geometric, high-legibility feel),
+     so the app looks intentionally "Apple" everywhere, not just on Apple
+     hardware. */
+  --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text',
+    'Inter', system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+
+  /* Premium indigo/violet design system */
+  --color-primary: #6366f1;
+  --color-primary-dark: #4338ca;
+  --color-primary-light: #818cf8;
+  --color-accent: #059669;
+  --color-accent-light: #d1fae5;
+
+  --color-surface: #f5f3ff;
+  --color-surface-alt: #faf9ff;
+  --color-card: #ffffff;
+  --color-ink: #1e1b4b;
+  --color-muted: #ebeffa;
+  --color-muted-fg: #64748b;
+  --color-hairline: #e5e0fa;
+
+  --color-danger: #dc2626;
+  --color-danger-light: #fee2e2;
+  --color-warning: #d97706;
+  --color-warning-light: #fef3c7;
+
+  --shadow-soft: 0 1px 2px rgba(30, 27, 75, 0.04), 0 8px 24px -8px rgba(79, 70, 229, 0.12);
+  --shadow-lift: 0 2px 4px rgba(30, 27, 75, 0.06), 0 16px 32px -12px rgba(79, 70, 229, 0.22);
+  --shadow-hover: 0 4px 10px rgba(30, 27, 75, 0.06), 0 20px 40px -14px rgba(79, 70, 229, 0.28);
+
+  /* Apple-style spring/deceleration easing for entries and hover motion */
+  --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  background-color: var(--color-surface);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

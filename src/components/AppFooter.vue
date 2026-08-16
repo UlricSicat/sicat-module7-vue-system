@@ -1,9 +1,9 @@
 <script setup></script>
 
 <template>
-  <footer class="bg-gray-100 border-t border-gray-200 mt-10">
-    <div class="max-w-5xl mx-auto px-4 py-5 text-center text-xs text-gray-500">
-      <p>Student Task Management System &mdash; Module 7 Prototype</p>
+  <footer class="border-t border-[var(--color-hairline)] mt-12">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 py-6 text-center text-xs text-[var(--color-muted-fg)]">
+      <p class="font-medium text-[var(--color-ink)]/70">Student Task Management System</p>
     </div>
   </footer>
 </template>
