@@ -1,7 +1,9 @@
 # Student Task Management System
 
 **Student Name:** John Ulric F. Sicat
+
 **Section:** BSCS-3A
+
 **Course:** Software Engineering 1 — Module 7 Design and Implementation
 
 ## Project Overview
