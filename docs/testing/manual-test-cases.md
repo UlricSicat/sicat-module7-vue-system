@@ -515,15 +515,15 @@ No matching task records are displayed, and the application shows its appropriat
 
 ### Actual Result
 
-**To be recorded after execution.**
+**No matching task records are displayed.**
 
 ### Status
 
-**Not Run**
+**Pass**
 
 ### Evidence
 
-`tc-10.png` — Screenshot showing the search keyword and the resulting no-match state.
+`tc-10.png`
 
 ---
 
@@ -531,16 +531,16 @@ No matching task records are displayed, and the application shows its appropriat
 
 | ID    | Feature          | Type     | Evidence    | Status  |
 | ----- | ---------------- | -------- | ----------- | ------- |
-| TC-01 | Add Record       | Positive | `tc-01.png` | Not Run |
-| TC-02 | Add / Validation | Negative | `tc-02.png` | Not Run |
-| TC-03 | Display Records  | Positive | `tc-03.png` | Not Run |
-| TC-04 | Display Records  | Edge     | `tc-04.png` | Not Run |
-| TC-05 | Edit Record      | Positive | `tc-05.png` | Not Run |
-| TC-06 | Edit Record      | Edge     | `tc-06.png` | Not Run |
-| TC-07 | Delete Record    | Positive | `tc-07.png` | Not Run |
-| TC-08 | Delete Record    | Negative | `tc-08.png` | Not Run |
-| TC-09 | Search           | Positive | `tc-09.png` | Not Run |
-| TC-10 | Search           | Negative | `tc-10.png` | Not Run |
+| TC-01 | Add Record       | Positive | `tc-01.png` | Pass |
+| TC-02 | Add / Validation | Negative | `tc-02.png` | Pass |
+| TC-03 | Display Records  | Positive | `tc-03.png` | Pass |
+| TC-04 | Display Records  | Edge     | `tc-04.png` | Pass |
+| TC-05 | Edit Record      | Positive | `tc-05.png` | Pass |
+| TC-06 | Edit Record      | Edge     | `tc-06.png` | Pass |
+| TC-07 | Delete Record    | Positive | `tc-07.png` | Pass |
+| TC-08 | Delete Record    | Negative | `tc-08.png` | Pass |
+| TC-09 | Search           | Positive | `tc-09.png` | Pass |
+| TC-10 | Search           | Negative | `tc-10.png` | Pass |
 
 ---
 
@@ -569,10 +569,10 @@ After all tests have been executed, update the summary below.
 
 | Result  |          Count |
 | ------- | -------------: |
-| Passed  | To be recorded |
-| Failed  | To be recorded |
-| Blocked | To be recorded |
-| Not Run | To be recorded |
+| Passed  | 10 |
+| Failed  | 0 |
+| Blocked | 0 |
+| Not Run | 0 |
 | Total   |             10 |
 
 Any failed case that represents an actual software defect will be documented separately in `defect-report.md`.
