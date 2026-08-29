@@ -55,13 +55,25 @@ function validate() {
     errors.title = 'Task title is required.'
     valid = false
   }
+
   if (!form.subject.trim()) {
     errors.subject = 'Subject is required.'
     valid = false
   }
+
   if (!form.dueDate) {
     errors.dueDate = 'Due date is required.'
     valid = false
+  } else {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+
+    const selectedDate = new Date(`${form.dueDate}T00:00:00`)
+
+    if (selectedDate < today) {
+      errors.dueDate = 'Due date cannot be in the past.'
+      valid = false
+    }
   }
 
   return valid
