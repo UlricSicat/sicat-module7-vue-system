@@ -281,3 +281,34 @@ The following screenshots document the development, testing, defect correction, 
 
 **Public GitHub Repository:**
 https://github.com/UlricSicat/sicat-module7-vue-system.git
+
+## Module 9 - Software Evolution
+
+### Change Request
+
+**CR-M9-01:** Add Active/Inactive Task Filter
+
+**Maintenance Type:** Perfective Maintenance
+
+**Target Version:** 1.1.0
+
+### Implementation
+
+The Student Task Management System was enhanced with an Active/Inactive record filter. The feature allows users to filter task records based on their activity state while preserving the existing CRUD operations, search, validation, delete confirmation, and localStorage persistence.
+
+### Testing
+
+- 12 manual test cases completed
+- Module 8 regression tests retained
+- Module 9 automated tests added
+- Vitest test suite passed
+- Production build passed
+- GitHub Actions CI passed
+
+### Compatibility
+
+Existing localStorage records are handled safely and receive a default Active state when the new activity field is not present.
+
+### Version
+
+Version 1.1.0
