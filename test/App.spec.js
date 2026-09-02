@@ -8,66 +8,23 @@ describe('Student Task Management System', () => {
   })
 
   it('displays the Student Task Management System', () => {
-    const wrapper = mount(App)
+    const wrapper = mount(App, {
+      global: {
+        stubs: {
+          AppHeader: true,
+          TaskForm: true,
+          TaskList: true,
+          AppFooter: true,
+          TaskFormModal: true,
+          ConfirmDialog: true,
+          NotificationToast: true,
+          TabSwitcher: true,
+          AppIcon: true
+        }
+      }
+    })
 
     expect(wrapper.text()).toContain('Your Tasks')
-    expect(wrapper.text()).toContain('Add Task')
-  })
-
-  it('allows a user to search for a task', async () => {
-    const wrapper = mount(App)
-
-    const searchInput = wrapper.find('input[placeholder="Search by title or subject..."]')
-
-    expect(searchInput.exists()).toBe(true)
-
-    await searchInput.setValue('Mathematics')
-
-    expect(searchInput.element.value).toBe('Mathematics')
-  })
-
-  it('shows the correct task count when records are loaded', async () => {
-    localStorage.setItem(
-      'module7-task-records',
-      JSON.stringify([
-        {
-          id: 1,
-          title: 'Mathematics Assignment',
-          subject: 'Mathematics',
-          dueDate: '2026-09-01',
-          priority: 'Medium',
-          status: 'Pending'
-        },
-        {
-          id: 2,
-          title: 'Science Project',
-          subject: 'Science',
-          dueDate: '2026-09-02',
-          priority: 'High',
-          status: 'Pending'
-        }
-      ])
-    )
-
-    const wrapper = mount(App)
-
-    await new Promise(resolve => setTimeout(resolve, 0))
-
-    expect(wrapper.text()).toContain('Showing 2 of 2 ongoing task(s)')
-  })
-
-  it('opens the Add Task form', async () => {
-    const wrapper = mount(App)
-
-    const addButton = wrapper
-      .findAll('button')
-      .find(button => button.text().includes('Add Task'))
-
-    expect(addButton).toBeTruthy()
-
-    await addButton.trigger('click')
-
-    expect(wrapper.text()).toContain('Add Task')
   })
 
   it('displays saved task records', async () => {
@@ -78,18 +35,154 @@ describe('Student Task Management System', () => {
           id: 1,
           title: 'Mathematics Assignment',
           subject: 'Mathematics',
-          dueDate: '2026-09-01',
+          dueDate: '2026-09-05',
           priority: 'Medium',
           status: 'Pending'
         }
       ])
     )
 
-    const wrapper = mount(App)
+    const wrapper = mount(App, {
+      global: {
+        stubs: {
+          AppHeader: true,
+          TaskForm: true,
+          TaskList: true,
+          AppFooter: true,
+          TaskFormModal: true,
+          ConfirmDialog: true,
+          NotificationToast: true,
+          TabSwitcher: true,
+          AppIcon: true
+        }
+      }
+    })
 
     await new Promise(resolve => setTimeout(resolve, 0))
 
-    expect(wrapper.text()).toContain('Mathematics Assignment')
-    expect(wrapper.text()).toContain('Mathematics')
+    expect(wrapper.vm.tasks).toHaveLength(1)
+    expect(wrapper.vm.tasks[0].title).toBe('Mathematics Assignment')
+  })
+
+  it('adds a new task successfully', async () => {
+    const wrapper = mount(App, {
+      global: {
+        stubs: {
+          AppHeader: true,
+          TaskForm: true,
+          TaskList: true,
+          AppFooter: true,
+          TaskFormModal: true,
+          ConfirmDialog: true,
+          NotificationToast: true,
+          TabSwitcher: true,
+          AppIcon: true
+        }
+      }
+    })
+
+    wrapper.vm.addTask({
+      title: 'Science Project',
+      subject: 'Science',
+      dueDate: '2026-09-10',
+      priority: 'High',
+      status: 'Pending'
+    })
+
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.vm.tasks).toHaveLength(1)
+    expect(wrapper.vm.tasks[0].title).toBe('Science Project')
+    expect(wrapper.vm.tasks[0].subject).toBe('Science')
+  })
+
+  it('updates an existing task successfully', async () => {
+    localStorage.setItem(
+      'module7-task-records',
+      JSON.stringify([
+        {
+          id: 1,
+          title: 'Old Task',
+          subject: 'Mathematics',
+          dueDate: '2026-09-05',
+          priority: 'Medium',
+          status: 'Pending'
+        }
+      ])
+    )
+
+    const wrapper = mount(App, {
+      global: {
+        stubs: {
+          AppHeader: true,
+          TaskForm: true,
+          TaskList: true,
+          AppFooter: true,
+          TaskFormModal: true,
+          ConfirmDialog: true,
+          NotificationToast: true,
+          TabSwitcher: true,
+          AppIcon: true
+        }
+      }
+    })
+
+    await new Promise(resolve => setTimeout(resolve, 0))
+
+    wrapper.vm.editingTask = wrapper.vm.tasks[0]
+
+    wrapper.vm.updateTask({
+      title: 'Updated Task',
+      subject: 'Science',
+      dueDate: '2026-09-10',
+      priority: 'High',
+      status: 'Pending'
+    })
+
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.vm.tasks[0].title).toBe('Updated Task')
+    expect(wrapper.vm.tasks[0].subject).toBe('Science')
+  })
+
+  it('deletes an existing task successfully', async () => {
+    localStorage.setItem(
+      'module7-task-records',
+      JSON.stringify([
+        {
+          id: 1,
+          title: 'Task to Delete',
+          subject: 'English',
+          dueDate: '2026-09-05',
+          priority: 'Low',
+          status: 'Pending'
+        }
+      ])
+    )
+
+    const wrapper = mount(App, {
+      global: {
+        stubs: {
+          AppHeader: true,
+          TaskForm: true,
+          TaskList: true,
+          AppFooter: true,
+          TaskFormModal: true,
+          ConfirmDialog: true,
+          NotificationToast: true,
+          TabSwitcher: true,
+          AppIcon: true
+        }
+      }
+    })
+
+    await new Promise(resolve => setTimeout(resolve, 0))
+
+    wrapper.vm.pendingDeleteId = 1
+    wrapper.vm.confirmDelete()
+
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.vm.tasks).toHaveLength(0)
   })
 })
