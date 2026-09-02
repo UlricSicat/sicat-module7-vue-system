@@ -1,3 +1,4 @@
+```vue
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import AppHeader from './components/AppHeader.vue'
@@ -16,7 +17,11 @@ const tasks = ref([])
 const searchTerm = ref('')
 const editingTask = ref(null)
 const showFormModal = ref(false)
-const activeTab = ref('ongoing') // 'ongoing' | 'completed'
+const activeTab = ref('ongoing')
+
+// Module 9 filters
+const activityFilter = ref('all')
+const priorityFilter = ref('all')
 
 const showDeleteConfirm = ref(false)
 const pendingDeleteId = ref(null)
@@ -24,10 +29,15 @@ const pendingDeleteId = ref(null)
 const notifications = ref([])
 let notificationId = 0
 
-// Step 8: Load records from localStorage
+// Load records from localStorage
 onMounted(() => {
   const saved = localStorage.getItem(STORAGE_KEY)
-  tasks.value = saved ? JSON.parse(saved) : []
+
+  try {
+    tasks.value = saved ? JSON.parse(saved) : []
+  } catch {
+    tasks.value = []
+  }
 })
 
 function saveTasks() {
@@ -37,6 +47,7 @@ function saveTasks() {
 function notify(message, type = 'info') {
   const id = ++notificationId
   notifications.value.push({ id, message, type })
+
   setTimeout(() => dismissNotification(id), 3000)
 }
 
@@ -60,25 +71,35 @@ function closeFormModal() {
   editingTask.value = null
 }
 
-// Step 9: Create
+// Create
 function addTask(newTask) {
   tasks.value.push({
     id: Date.now(),
+    active: true,
     ...newTask
   })
+
   saveTasks()
   notify('Task added successfully.', 'success')
   closeFormModal()
 }
 
-// Step 12: Update
+// Update
 function updateTask(updatedFields) {
-  const index = tasks.value.findIndex(t => t.id === editingTask.value.id)
+  const index = tasks.value.findIndex(
+    task => task.id === editingTask.value.id
+  )
+
   if (index !== -1) {
-    tasks.value[index] = { ...tasks.value[index], ...updatedFields }
+    tasks.value[index] = {
+      ...tasks.value[index],
+      ...updatedFields
+    }
+
     saveTasks()
     notify('Task updated successfully.', 'success')
   }
+
   closeFormModal()
 }
 
@@ -94,7 +115,7 @@ function handleInvalid(message) {
   notify(message, 'error')
 }
 
-// Step 10: Delete with notification-based confirmation (no window.confirm)
+// Delete
 function requestDelete(id) {
   pendingDeleteId.value = id
   showDeleteConfirm.value = true
@@ -107,7 +128,9 @@ function cancelDelete() {
 
 function confirmDelete() {
   const id = pendingDeleteId.value
+
   tasks.value = tasks.value.filter(task => task.id !== id)
+
   saveTasks()
   notify('Task deleted.', 'warning')
 
@@ -119,57 +142,127 @@ function confirmDelete() {
   pendingDeleteId.value = null
 }
 
+// Complete / Restore
 function toggleComplete(id) {
-  const task = tasks.value.find(t => t.id === id)
+  const task = tasks.value.find(task => task.id === id)
+
   if (task) {
-    task.status = task.status === 'Completed' ? 'Pending' : 'Completed'
+    task.status =
+      task.status === 'Completed'
+        ? 'Pending'
+        : 'Completed'
+
     saveTasks()
+
     notify(
-      task.status === 'Completed' ? 'Task marked as completed.' : 'Task moved back to ongoing.',
+      task.status === 'Completed'
+        ? 'Task marked as completed.'
+        : 'Task moved back to ongoing.',
       'success'
     )
   }
 }
 
-// Split into Ongoing / Completed tabs
-const ongoingTasks = computed(() => tasks.value.filter(t => t.status !== 'Completed'))
-const completedTasks = computed(() => tasks.value.filter(t => t.status === 'Completed'))
+// Ongoing / Completed
+const ongoingTasks = computed(() =>
+  tasks.value.filter(task => task.status !== 'Completed')
+)
 
-const activeList = computed(() => (activeTab.value === 'completed' ? completedTasks.value : ongoingTasks.value))
+const completedTasks = computed(() =>
+  tasks.value.filter(task => task.status === 'Completed')
+)
 
+const activeList = computed(() =>
+  activeTab.value === 'completed'
+    ? completedTasks.value
+    : ongoingTasks.value
+)
+
+// Search + Activity + Priority filtering
 const filteredTasks = computed(() => {
   const keyword = searchTerm.value.toLowerCase().trim()
-  if (!keyword) return activeList.value
-  return activeList.value.filter(
-    task =>
-      task.title.toLowerCase().includes(keyword) ||
-      task.subject.toLowerCase().includes(keyword)
-  )
+
+  return activeList.value.filter(task => {
+    // Search
+    const title = String(task.title || '').toLowerCase()
+    const subject = String(task.subject || '').toLowerCase()
+
+    const matchesSearch =
+      !keyword ||
+      title.includes(keyword) ||
+      subject.includes(keyword)
+
+    // Activity
+    // Old records without "active" are treated as Active.
+    const matchesActivity =
+      activityFilter.value === 'all' ||
+      (activityFilter.value === 'active' && task.active !== false) ||
+      (activityFilter.value === 'inactive' && task.active === false)
+
+    // Priority
+    const matchesPriority =
+      priorityFilter.value === 'all' ||
+      task.priority === priorityFilter.value
+
+    return (
+      matchesSearch &&
+      matchesActivity &&
+      matchesPriority
+    )
+  })
 })
 
-const pendingCount = computed(() => ongoingTasks.value.length)
+const pendingCount = computed(() =>
+  ongoingTasks.value.length
+)
 
 const tabs = computed(() => [
-  { id: 'ongoing', label: 'Ongoing', count: ongoingTasks.value.length },
-  { id: 'completed', label: 'Completed', count: completedTasks.value.length }
+  {
+    id: 'ongoing',
+    label: 'Ongoing',
+    count: ongoingTasks.value.length
+  },
+  {
+    id: 'completed',
+    label: 'Completed',
+    count: completedTasks.value.length
+  }
 ])
 </script>
 
 <template>
   <div class="min-h-screen flex flex-col">
-    <NotificationToast :notifications="notifications" @dismiss="dismissNotification" />
+    <NotificationToast
+      :notifications="notifications"
+      @dismiss="dismissNotification"
+    />
 
-    <AppHeader :total-tasks="tasks.length" :pending-tasks="pendingCount" />
+    <AppHeader
+      :total-tasks="tasks.length"
+      :pending-tasks="pendingCount"
+    />
 
-    <main class="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 py-8 space-y-6">
-      <div class="bg-white rounded-2xl border border-[var(--color-hairline)] shadow-[var(--shadow-soft)] p-5">
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <main
+      class="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 py-8 space-y-6"
+    >
+      <div
+        class="bg-white rounded-2xl border border-[var(--color-hairline)] shadow-[var(--shadow-soft)] p-5"
+      >
+        <div
+          class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
+        >
           <div>
-            <h2 class="text-lg font-bold text-[var(--color-ink)]">Your Tasks</h2>
-            <p class="text-xs text-[var(--color-muted-fg)] mt-0.5">
+            <h2 class="text-lg font-bold text-[var(--color-ink)]">
+              Your Tasks
+            </h2>
+
+            <p
+              class="text-xs text-[var(--color-muted-fg)] mt-0.5"
+            >
               Switch tabs to review tasks you've already finished.
             </p>
           </div>
+
           <button
             @click="openAddTaskModal"
             class="inline-flex items-center justify-center gap-2 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-all duration-200 hover:brightness-110 hover:-translate-y-0.5 hover:shadow-[var(--shadow-hover)] active:scale-[0.96] active:translate-y-0 shadow-[var(--shadow-soft)] self-start sm:self-auto cursor-pointer"
@@ -180,30 +273,109 @@ const tabs = computed(() => [
           </button>
         </div>
 
-        <div class="mt-5 pt-5 border-t border-[var(--color-hairline)] flex flex-col gap-4">
-          <TabSwitcher v-model="activeTab" :tabs="tabs" />
+        <div
+          class="mt-5 pt-5 border-t border-[var(--color-hairline)] flex flex-col gap-4"
+        >
+          <TabSwitcher
+            v-model="activeTab"
+            :tabs="tabs"
+          />
 
-          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <div class="relative w-full sm:max-w-xs">
-              <AppIcon
-                name="search"
-                class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--color-muted-fg)]"
-              />
-              <input
-                v-model="searchTerm"
-                type="text"
-                placeholder="Search by title or subject..."
-                class="w-full rounded-xl border border-[var(--color-hairline)] bg-[var(--color-surface-alt)] pl-10 pr-3.5 py-2.5 text-sm text-[var(--color-ink)] placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/40 focus:border-[var(--color-primary)] transition-colors"
-              />
+          <!-- Search and Filters -->
+          <div class="flex flex-col gap-3">
+            <div
+              class="flex flex-col sm:flex-row sm:items-center gap-3"
+            >
+              <!-- Search -->
+              <div
+                class="relative w-full sm:flex-1"
+              >
+                <AppIcon
+                  name="search"
+                  class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--color-muted-fg)]"
+                />
+
+                <input
+                  v-model="searchTerm"
+                  type="text"
+                  placeholder="Search by title or subject..."
+                  class="w-full rounded-xl border border-[var(--color-hairline)] bg-[var(--color-surface-alt)] pl-10 pr-3.5 py-2.5 text-sm text-[var(--color-ink)] placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/40 focus:border-[var(--color-primary)] transition-colors"
+                />
+              </div>
+
+              <!-- Activity Filter -->
+              <select
+                v-model="activityFilter"
+                class="w-full sm:w-auto rounded-xl border border-[var(--color-hairline)] bg-[var(--color-surface-alt)] px-3.5 py-2.5 text-sm text-[var(--color-ink)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/40 focus:border-[var(--color-primary)] transition-colors"
+              >
+                <option value="all">
+                  All Records
+                </option>
+
+                <option value="active">
+                  Active
+                </option>
+
+                <option value="inactive">
+                  Inactive
+                </option>
+              </select>
+
+              <!-- Priority Filter -->
+              <select
+                v-model="priorityFilter"
+                class="w-full sm:w-auto rounded-xl border border-[var(--color-hairline)] bg-[var(--color-surface-alt)] px-3.5 py-2.5 text-sm text-[var(--color-ink)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/40 focus:border-[var(--color-primary)] transition-colors"
+              >
+                <option value="all">
+                  All Priorities
+                </option>
+
+                <option value="High">
+                  High Priority
+                </option>
+
+                <option value="Medium">
+                  Medium Priority
+                </option>
+
+                <option value="Low">
+                  Low Priority
+                </option>
+              </select>
             </div>
-            <p class="text-xs text-[var(--color-muted-fg)] font-medium">
-              Showing {{ filteredTasks.length }} of {{ activeList.length }}
-              {{ activeTab === 'completed' ? 'completed' : 'ongoing' }} task(s)
-            </p>
+
+            <!-- Result Count -->
+            <div
+              class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"
+            >
+              <p
+                class="text-xs text-[var(--color-muted-fg)] font-medium"
+              >
+                Showing {{ filteredTasks.length }} of
+                {{ activeList.length }}
+                {{
+                  activeTab === 'completed'
+                    ? 'completed'
+                    : 'ongoing'
+                }}
+                task(s)
+              </p>
+
+              <p
+                v-if="
+                  activityFilter !== 'all' ||
+                  priorityFilter !== 'all'
+                "
+                class="text-xs text-[var(--color-primary)] font-medium"
+              >
+                Filters applied
+              </p>
+            </div>
           </div>
         </div>
       </div>
 
+      <!-- Task List -->
       <TaskList
         :tasks="filteredTasks"
         :variant="activeTab"
@@ -216,7 +388,10 @@ const tabs = computed(() => [
     <AppFooter />
 
     <!-- Add / Edit Task window -->
-    <TaskFormModal :visible="showFormModal" @close="closeFormModal">
+    <TaskFormModal
+      :visible="showFormModal"
+      @close="closeFormModal"
+    >
       <TaskForm
         :editing-task="editingTask"
         @save="handleSave"
@@ -225,7 +400,7 @@ const tabs = computed(() => [
       />
     </TaskFormModal>
 
-    <!-- Delete confirmation (replaces window.confirm) -->
+    <!-- Delete confirmation -->
     <ConfirmDialog
       :visible="showDeleteConfirm"
       title="Delete Task"
@@ -235,3 +410,4 @@ const tabs = computed(() => [
     />
   </div>
 </template>
+```
